@@ -1,15 +1,14 @@
-import { mk_e64, step, tick, get_addr } from "./cpu.js";
+import { malloc } from "./utils.js";
+import { mk_cpu, step, tick, get_addr, get_data } from "./cpu.js";
 
-const comp = mk_e64();
+const cpu = mk_cpu();
+const mem = malloc(1 << 16);
 
-comp.mem[0] = 0xa9;
-comp.mem[1] = 0x01;
-console.log(comp.regs.pc, comp.mem);
-const pins = tick(comp);
-console.log("pins", pins, "addr:", get_addr(pins));
-const pins2 = tick(comp);
-console.log("pins", pins2, "addr:", get_addr(pins2));
-const pins3 = tick(comp);
-console.log("pins", pins3, "addr:", get_addr(pins3));
-const pins4 = tick(comp);
-console.log("pins", pins4, "addr:", get_addr(pins4));
+mem[0] = 0xa9;
+mem[1] = 0x01;
+
+console.log(cpu.regs.pc, mem);
+const pins = tick(cpu);
+const addr = get_addr(pins);
+mem[addr] = get_data(pins);
+console.log("oh hai", addr, mem[addr]);

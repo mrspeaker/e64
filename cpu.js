@@ -1,5 +1,10 @@
-const malloc = (bytes) => new Array(bytes).fill(0);
-const balloc = (bytes) => new Array(bytes).fill(false);
+import { malloc, balloc } from "./utils.js";
+
+export const mk_cpu = () => ({
+    regs: mk_regs(),
+    flags: mk_flags(),
+    pins: mk_pins(),
+});
 
 const mk_regs = () => ({
     a: 0,
@@ -47,26 +52,17 @@ const mk_flags = () => ({
     negative: false,
 });
 
-export const mk_e64 = () => {
-    return {
-        mem: malloc(1 << 16),
-        regs: mk_regs(),
-        flags: mk_flags(),
-        pins: mk_pins(),
-    };
-};
-
 // Exec one instruction
 export const step = (compy) => {
     compy.regs.pc++;
     return compy;
 };
 
-const get_data_bus = (pins) => {
+export const get_data = (pins) => {
     // return what's on the data bus.
     return 0xa9;
 };
-const put_data_bus = (pins, value) => {
+const put_data = (pins, value) => {
     // write value to bus.
 };
 
@@ -116,7 +112,7 @@ const put_address_bus = (pins, value) => {
 };
 
 const fetch = (cpu) => {
-    put_data_bus(cpu.pins, cpu.regs.pc);
+    put_data(cpu.pins, cpu.regs.pc);
     cpu.pins[pinout.SYNC] = false;
 };
 
@@ -125,7 +121,7 @@ const fetch = (cpu) => {
 export const tick = (cpu) => {
     const { pins, regs } = cpu;
     if (pins[pinout.SYNC]) {
-        regs.ir = get_data_bus(pins) << 3;
+        regs.ir = get_data(pins) << 3;
         pins[pinout.SYNC] = false;
     }
     switch (regs.ir++) {
