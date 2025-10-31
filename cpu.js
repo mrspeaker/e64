@@ -1,4 +1,4 @@
-import { malloc, balloc } from "./utils.js";
+import { malloc, balloc, hex } from "./utils.js";
 
 export const mk_cpu = () => ({
     regs: mk_regs(),
@@ -108,29 +108,28 @@ export const get_addr = (pins) =>
     (pins[pinout.A15] << 15);
 
 const put_addr = (pins, value) => {
-    pins[pinout.A0] = value & (1 << 0);
-    pins[pinout.A1] = value & (1 << 1);
-    pins[pinout.A2] = value & (1 << 2);
-    pins[pinout.A3] = value & (1 << 3);
-    pins[pinout.A4] = value & (1 << 4);
-    pins[pinout.A5] = value & (1 << 5);
-    pins[pinout.A6] = value & (1 << 6);
-    pins[pinout.A7] = value & (1 << 7);
-    pins[pinout.A8] = value & (1 << 8);
-    pins[pinout.A9] = value & (1 << 9);
-    pins[pinout.A10] = value & (1 << 10);
-    pins[pinout.A11] = value & (1 << 11);
-    pins[pinout.A12] = value & (1 << 12);
-    pins[pinout.A13] = value & (1 << 13);
-    pins[pinout.A14] = value & (1 << 14);
-    pins[pinout.A15] = value & (1 << 15);
-    return value;
+    pins[pinout.A0] = !!(value & (1 << 0));
+    pins[pinout.A1] = !!(value & (1 << 1));
+    pins[pinout.A2] = !!(value & (1 << 2));
+    pins[pinout.A3] = !!(value & (1 << 3));
+    pins[pinout.A4] = !!(value & (1 << 4));
+    pins[pinout.A5] = !!(value & (1 << 5));
+    pins[pinout.A6] = !!(value & (1 << 6));
+    pins[pinout.A7] = !!(value & (1 << 7));
+    pins[pinout.A8] = !!(value & (1 << 8));
+    pins[pinout.A9] = !!(value & (1 << 9));
+    pins[pinout.A10] = !!(value & (1 << 10));
+    pins[pinout.A11] = !!(value & (1 << 11));
+    pins[pinout.A12] = !!(value & (1 << 12));
+    pins[pinout.A13] = !!(value & (1 << 13));
+    pins[pinout.A14] = !!(value & (1 << 14));
+    pins[pinout.A15] = !!(value & (1 << 15));
+    return pins;
 };
 
 const fetch = (cpu) => {
     put_addr(cpu.pins, cpu.regs.pc);
     cpu.pins[pinout.SYNC] = true;
-    console.log("put", cpu.regs.pc);
 };
 
 export const init_cpu = (cpu) => {
@@ -144,10 +143,10 @@ export const init_cpu = (cpu) => {
 // https://floooh.github.io/2019/12/13/cycle-stepped-6502.html
 export const tick = (cpu) => {
     const { pins, regs } = cpu;
-    console.log("tick", regs.pc, regs.ir & 3);
+    console.log("tick PC:", regs.pc, " t:", regs.ir & 3);
     if (pins[pinout.SYNC]) {
         regs.ir = get_data(pins) << 3;
-        console.log("new instruction:", regs.ir);
+        console.log("IR: ", hex(regs.ir >> 3));
         pins[pinout.SYNC] = false;
         regs.pc++;
     }
@@ -155,6 +154,15 @@ export const tick = (cpu) => {
     pins[pinout.RW] = true;
 
     switch (regs.ir++) {
+        // ADC # (no carry!)
+        case (0x69 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0x69 << 3) | 1:
+            regs.a = (regs.a + get_data(pins)) & 0xff;
+            fetch(cpu);
+            break;
+
         // LDX #
         case (0xa2 << 3) | 0:
             put_addr(pins, regs.pc++);
@@ -169,9 +177,20 @@ export const tick = (cpu) => {
             put_addr(pins, regs.pc++);
             break;
         case (0xa9 << 3) | 1:
-            // c->A=_GD();_NZ(c->A);_FETCH();break ;
             regs.a = get_data(pins);
-            // TODO: set nz
+            fetch(cpu);
+            break;
+
+        // NOP
+        case (0xea << 3) | 0:
+            put_addr(pins, regs.pc);
+            break;
+        case (0xea << 3) | 1:
+            fetch(cpu);
+            break;
+
+        default:
+            put_addr(pins, regs.pc++);
             fetch(cpu);
             break;
     }
