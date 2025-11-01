@@ -18,10 +18,13 @@ const put_mem = (vs, off = 0) => {
 };
 
 const prg = `
-lda #16
-sta $20
-lda #$10
-lda $20
+ lda #15
+ sta $20
+loop
+ lda $20
+ adc #$1
+ sta $20
+ jmp loop
 `;
 
 put_mem(assemble(prg));
@@ -29,7 +32,7 @@ put_mem(assemble(prg));
 init_cpu(cpu);
 put_data(cpu.pins, mem[get_addr(cpu.pins)]);
 
-for (let i = 0; i < 20; i++) {
+for (let i = 0; i < 10; i++) {
     tick(cpu);
     const addr = get_addr(cpu.pins);
     if (cpu.pins[pinout.RW]) {
@@ -47,5 +50,4 @@ console.log(
     hex(cpu.regs.x),
     "Y:",
     hex(cpu.regs.y),
-    mem.map(hex),
 );

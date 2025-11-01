@@ -13,6 +13,7 @@ const mk_regs = () => ({
     sp: 0,
     pc: 0,
     ir: 0, // internal instruction register
+    ad: 0, // 16-bit address pointer
 });
 
 export const pinout = {
@@ -154,6 +155,19 @@ export const tick = (cpu) => {
     pins[pinout.RW] = true;
 
     switch (regs.ir++) {
+        // JMP
+        case (0x4c << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0x4c << 3) | 1:
+            put_addr(pins, regs.pc++);
+            regs.ad = get_data(pins);
+            break;
+        case (0x4c << 3) | 2:
+            regs.pc = (get_data(pins) << 8) | regs.ad;
+            fetch(cpu);
+            break;
+
         // ADC # (no carry!)
         case (0x69 << 3) | 0:
             put_addr(pins, regs.pc++);
@@ -168,7 +182,6 @@ export const tick = (cpu) => {
             put_addr(pins, regs.pc++);
             break;
         case (0x85 << 3) | 1:
-            //_SA(_GD());_SD(c->A);_WR();
             put_addr(pins, get_data(pins));
             put_data(pins, regs.a);
             pins[pinout.RW] = false;
@@ -186,7 +199,7 @@ export const tick = (cpu) => {
             fetch(cpu);
             break;
 
-        // STA zp (3 cycles)
+        // LDA zp (3 cycles)
         case (0xa5 << 3) | 0:
             put_addr(pins, regs.pc++);
             break;

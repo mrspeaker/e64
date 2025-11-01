@@ -9,6 +9,9 @@ const ops = {
     adc: {
         imm: 0x69,
     },
+    jmp: {
+        abs: 0x4c,
+    },
 };
 
 const get_by_mnem_and_mode = (mnemonic, mode) => {
@@ -43,14 +46,33 @@ const parse_op = (op) => {
 
 export const assemble = (prg) => {
     const lines = prg.split("\n").filter((l) => l.trim());
-    const asm = lines.reduce((bytes, line) => {
-        const [mnemonic, operand] = line.split(" ");
+    const symbols = {};
+    const asm_with_symbols = lines.reduce((bytes, line) => {
+        if (line[0] !== " ") {
+            // label
+            const pc = bytes.length;
+            symbols[line.trim()] = pc;
+            return bytes;
+        }
+        const [mnemonic, operand] = line.trim().split(" ");
+        if (operand[0].match(/^[a-zA-Z]/)) {
+            // operand is a symbol
+            bytes.push(operand);
+            return bytes;
+        }
         const op = parse_op(operand);
-        console.log(op);
         const opcode = get_by_mnem_and_mode(mnemonic, op.mode);
         bytes.push(opcode, op.value);
         return bytes;
     }, []);
-    console.log(asm);
+
+    // Replace symbols
+    const asm = asm_with_symbols.map((v) => {
+        if (typeof v === "string") {
+            return symbols[v];
+        }
+        return v;
+    });
+    console.log(asm, symbols);
     return asm;
 };
