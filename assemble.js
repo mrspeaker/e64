@@ -57,7 +57,8 @@ export const assemble = (prg) => {
         const [mnemonic, operand] = line.trim().split(" ");
         if (operand[0].match(/^[a-zA-Z]/)) {
             // operand is a symbol
-            bytes.push(operand);
+            const opcode = get_by_mnem_and_mode(mnemonic, "abs");
+            bytes.push(opcode, operand);
             return bytes;
         }
         const op = parse_op(operand);

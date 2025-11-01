@@ -32,7 +32,7 @@ put_mem(assemble(prg));
 init_cpu(cpu);
 put_data(cpu.pins, mem[get_addr(cpu.pins)]);
 
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < 100; i++) {
     tick(cpu);
     const addr = get_addr(cpu.pins);
     if (cpu.pins[pinout.RW]) {
