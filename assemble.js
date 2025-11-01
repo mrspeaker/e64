@@ -58,7 +58,9 @@ export const assemble = (prg) => {
         if (operand[0].match(/^[a-zA-Z]/)) {
             // operand is a symbol
             const opcode = get_by_mnem_and_mode(mnemonic, "abs");
-            bytes.push(opcode, operand);
+            // TODO: oh nope... operand is 2 bytes.. need to replace properly
+            // (Currently only works with addr < 256)
+            bytes.push(opcode, operand, 0);
             return bytes;
         }
         const op = parse_op(operand);

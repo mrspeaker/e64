@@ -18,13 +18,17 @@ const put_mem = (vs, off = 0) => {
 };
 
 const prg = `
- lda #15
- sta $20
+ jmp loadit
 loop
  lda $20
  adc #$1
  sta $20
  jmp loop
+loadit
+ lda #15
+ sta $20
+ jmp loop
+
 `;
 
 put_mem(assemble(prg));
