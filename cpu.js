@@ -163,12 +163,40 @@ export const tick = (cpu) => {
             fetch(cpu);
             break;
 
+        // STA (zp)
+        case (0x85 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0x85 << 3) | 1:
+            //_SA(_GD());_SD(c->A);_WR();
+            put_addr(pins, get_data(pins));
+            put_data(pins, regs.a);
+            pins[pinout.RW] = false;
+            break;
+        case (0x85 << 3) | 2:
+            fetch(cpu);
+            break;
+
         // LDX #
         case (0xa2 << 3) | 0:
             put_addr(pins, regs.pc++);
             break;
         case (0xa2 << 3) | 1:
             regs.x = get_data(pins);
+            fetch(cpu);
+            break;
+
+        // STA zp (3 cycles)
+        case (0xa5 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0xa5 << 3) | 1:
+            //_SA(_GD());
+            put_addr(pins, get_data(pins));
+            break;
+        case (0xa5 << 3) | 2:
+            //c->A=_GD();_NZ(c->A);
+            regs.a = get_data(pins);
             fetch(cpu);
             break;
 

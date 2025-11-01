@@ -9,31 +9,43 @@ import {
     put_data,
     pinout,
 } from "./cpu.js";
+import { assemble } from "./assemble.js";
 
 const cpu = mk_cpu();
 const mem = malloc(1 << 16);
+const put_mem = (vs, off = 0) => {
+    vs.forEach((v, i) => (mem[i + off] = v));
+};
 
-mem[0] = 0xea;
-mem[1] = 0xa9;
-mem[2] = 0x03;
-mem[3] = 0xea;
-mem[4] = 0xa2;
-mem[5] = 0x05;
-mem[6] = 0x69;
-mem[7] = 0x01;
+const prg = `
+lda #16
+sta $20
+lda #$10
+lda $20
+`;
+
+put_mem(assemble(prg));
 
 init_cpu(cpu);
 put_data(cpu.pins, mem[get_addr(cpu.pins)]);
 
-for (let i = 0; i < 12; i++) {
+for (let i = 0; i < 20; i++) {
     tick(cpu);
     const addr = get_addr(cpu.pins);
     if (cpu.pins[pinout.RW]) {
         put_data(cpu.pins, mem[addr]);
     } else {
-        print("write....");
-        mem[addr] = get_data(cpu.pins);
+        const data = get_data(cpu.pins);
+        mem[addr] = data;
     }
 }
 
-console.log("A:", cpu.regs.a, "X:", cpu.regs.x, "Y:", cpu.regs.y);
+console.log(
+    "A:",
+    hex(cpu.regs.a),
+    "X:",
+    hex(cpu.regs.x),
+    "Y:",
+    hex(cpu.regs.y),
+    mem.map(hex),
+);
