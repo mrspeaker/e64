@@ -19,16 +19,19 @@ const put_mem = (vs, off = 0) => {
 
 const prg = `
  jmp loadit
-loop
+loop:
  lda $20
  adc #$1
+ beq done
  sta $20
  jmp loop
-loadit
- lda #15
+loadit:
+ lda #$f8
  sta $20
  jmp loop
-
+done:
+ ldy #$42
+ jmp done
 `;
 
 put_mem(assemble(prg));
@@ -36,7 +39,7 @@ put_mem(assemble(prg));
 init_cpu(cpu);
 put_data(cpu.pins, mem[get_addr(cpu.pins)]);
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 120; i++) {
     tick(cpu);
     const addr = get_addr(cpu.pins);
     if (cpu.pins[pinout.RW]) {

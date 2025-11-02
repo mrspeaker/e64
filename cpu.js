@@ -90,6 +90,12 @@ export const put_data = (pins, value) => {
     pins[pinout.D7] = !!(value & (1 << 7));
 };
 
+const get_data_signed = (pins) => {
+    const v = get_data(pins);
+    if (v < 0x80) return v;
+    return v - 0x100;
+};
+
 export const get_addr = (pins) =>
     pins[pinout.A0] +
     (pins[pinout.A1] << 1) +
@@ -128,6 +134,16 @@ const put_addr = (pins, value) => {
     return pins;
 };
 
+const set_nz = (flags, val) => {
+    flags.zero = false;
+    flags.negative = false;
+    if ((val & 0xff) === 0) {
+        flags.zero = true;
+    } else if (val & 128) {
+        flags.negative = true;
+    }
+};
+
 const fetch = (cpu) => {
     put_addr(cpu.pins, cpu.regs.pc);
     cpu.pins[pinout.SYNC] = true;
@@ -143,7 +159,7 @@ export const init_cpu = (cpu) => {
 // Tick one clock cycle
 // https://floooh.github.io/2019/12/13/cycle-stepped-6502.html
 export const tick = (cpu) => {
-    const { pins, regs } = cpu;
+    const { pins, regs, flags } = cpu;
     console.log("tick PC:", regs.pc, " t:", regs.ir & 3);
     if (pins[pinout.SYNC]) {
         regs.ir = get_data(pins) << 3;
@@ -173,8 +189,13 @@ export const tick = (cpu) => {
             put_addr(pins, regs.pc++);
             break;
         case (0x69 << 3) | 1:
-            regs.a = (regs.a + get_data(pins)) & 0xff;
-            fetch(cpu);
+            {
+                const sum = regs.a + get_data(pins);
+                regs.a = sum & 0xff;
+                flags.carry = sum & 0xff00;
+                set_nz(flags, sum);
+                fetch(cpu);
+            }
             break;
 
         // STA (zp)
@@ -190,12 +211,23 @@ export const tick = (cpu) => {
             fetch(cpu);
             break;
 
+        // LDY #
+        case (0xa0 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0xa0 << 3) | 1:
+            regs.y = get_data(pins);
+            set_nz(flags, regs.y);
+            fetch(cpu);
+            break;
+
         // LDX #
         case (0xa2 << 3) | 0:
             put_addr(pins, regs.pc++);
             break;
         case (0xa2 << 3) | 1:
             regs.x = get_data(pins);
+            set_nz(flags, regs.x);
             fetch(cpu);
             break;
 
@@ -210,6 +242,7 @@ export const tick = (cpu) => {
         case (0xa5 << 3) | 2:
             //c->A=_GD();_NZ(c->A);
             regs.a = get_data(pins);
+            set_nz(flags, regs.a);
             fetch(cpu);
             break;
 
@@ -219,6 +252,7 @@ export const tick = (cpu) => {
             break;
         case (0xa9 << 3) | 1:
             regs.a = get_data(pins);
+            set_nz(flags, regs.a);
             fetch(cpu);
             break;
 
@@ -227,6 +261,31 @@ export const tick = (cpu) => {
             put_addr(pins, regs.pc);
             break;
         case (0xea << 3) | 1:
+            fetch(cpu);
+            break;
+
+        // BEQ
+        case (0xf0 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0xf0 << 3) | 1:
+            put_addr(pins, regs.pc);
+            regs.ad = regs.pc + get_data_signed(pins);
+            if (!flags.zero) {
+                fetch(cpu);
+            }
+            break;
+        case (0xf0 << 3) | 2:
+            put_addr(pins, (regs.pc & 0xff00) | (regs.ad & 0x00ff));
+            // if not on page boundary...
+            // if((c->AD&0xFF00) == (c->PC&0xFF00)){
+            regs.pc = regs.ad;
+            fetch(cpu);
+            // }
+            break;
+        case (0xf0 << 3) | 3:
+            // is on page boundary (extra cycle)
+            regs.pc = regs.ad;
             fetch(cpu);
             break;
 
