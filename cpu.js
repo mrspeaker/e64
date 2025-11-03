@@ -211,6 +211,26 @@ export const tick = (cpu) => {
             fetch(cpu);
             break;
 
+        // BNE
+        case (0xd0 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0xd0 << 3) | 1:
+            put_addr(pins, regs.pc);
+            regs.ad = regs.pc + get_data_signed(pins);
+            if (flags.zero) {
+                fetch(cpu);
+            }
+            break;
+        case (0xd0 << 3) | 2:
+            put_addr(pins, (regs.pc & 0xff00) | (regs.ad & 0x00ff));
+            // if not on page boundary...
+            // if((c->AD&0xFF00) == (c->PC&0xFF00)){
+            regs.pc = regs.ad;
+            fetch(cpu);
+            // }
+            break;
+
         // LDY #
         case (0xa0 << 3) | 0:
             put_addr(pins, regs.pc++);
