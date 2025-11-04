@@ -19,25 +19,34 @@ const mem = malloc(1 << 16);
 const put_mem = (vs, off = 0) => {
     vs.forEach((v, i) => (mem[i + off] = v));
 };
+let asm;
 
 $click("#btnAssemble", () => {
     const p = $("#prg").innerHTML;
-    const asm = assemble(p);
+    asm = assemble(p);
     $("#bytes").innerHTML = asm
         .map((v) => v.toString(16).padStart(2, "0"))
         .join(" ");
 
+    $("#flags").innerHTML = "- - - - - - - - ";
+});
+
+$click("#btnRun", () => {
     run_prg(asm);
 
     $("#flags").innerHTML =
-        "A:" +
+        "A: " +
         hex(cpu.regs.a) +
-        " X:" +
+        " X: " +
         hex(cpu.regs.x) +
-        " Y:" +
+        " Y: " +
         hex(cpu.regs.y) +
-        " N:" +
-        Object.entries(cpu.flags);
+        "<br/>" +
+        Object.entries(cpu.flags)
+            .map(([k, v]) => {
+                return k[0] + "" + (v ? "*" : " ");
+            })
+            .join(" ");
 });
 
 function run_prg(asm) {
