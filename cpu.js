@@ -156,6 +156,20 @@ export const init_cpu = (cpu) => {
     return cpu.pins;
 };
 
+const cmp = (cpu, r, v) => {
+    //_m6502_cmp(m6502_t* cpu, uint8_t r, uint8_t v) {
+    const t = r - v;
+    // set neg and zero
+    // TODO: nope: unsigned check...
+    set_nz(cpu.flags, t);
+
+    // clear carry
+    // ~M6502_CF
+    // set carry
+    cpu.flags.carry = t && 0xff00 ? false : true;
+    // ((t & 0xFF00) ? 0:M6502_CF
+};
+
 // Tick one clock cycle
 // https://floooh.github.io/2019/12/13/cycle-stepped-6502.html
 export const tick = (cpu) => {
@@ -263,6 +277,15 @@ export const tick = (cpu) => {
             //c->A=_GD();_NZ(c->A);
             regs.a = get_data(pins);
             set_nz(flags, regs.a);
+            fetch(cpu);
+            break;
+
+        // CMP #
+        case (0xc9 << 3) | 0:
+            put_addr(pins, regs.pc++);
+            break;
+        case (0xc9 << 3) | 1:
+            cmp(cpu, regs.a, get_data(pins));
             fetch(cpu);
             break;
 

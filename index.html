@@ -1,7 +1,40 @@
 <!DOCTYPE html>
 <html>
-    <head></head>
+    <head>
+        <style>
+            .editable {
+                font-family: monospace;
+                font-size: 9pt;
+                width: 20em;
+                height: 20em;
+                overflow: auto;
+            }
+        </style>
+    </head>
     <body>
+        <pre id="bytes">00 00 00 00 00 00 00 00 00</pre>
+        <pre contenteditable class="editable" id="prg" spellcheck="false">
+ jmp loadit
+loop:
+ lda $20
+ adc #$1
+ sta $20
+ cmp #$f9
+ jmp done
+ jmp loop
+loadit:
+ lda #$f8
+ sta $20
+ jmp loop
+done:
+ ldy #$42
+ jmp done
+        </pre>
+        <button id="btnAssemble">asm</button>
+        <div>
+            <pre id="flags">--------</pre>
+            <pre id="pc">pc:</pre>
+        </div>
         <script src="./main.js" type="module"></script>
     </body>
 </html>

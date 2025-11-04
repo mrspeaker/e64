@@ -20,6 +20,9 @@ const ops = {
     jmp: {
         abs: 0x4c,
     },
+    cmp: {
+        imm: 0xc9,
+    },
     bne: {
         rel: 0xd0,
     },

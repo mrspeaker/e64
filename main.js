@@ -11,6 +11,9 @@ import {
 } from "./cpu.js";
 import { assemble } from "./assemble.js";
 
+const $ = (sel) => document.querySelector(sel);
+const $click = (sel, f) => $(sel).addEventListener("click", f);
+
 const cpu = mk_cpu();
 const mem = malloc(1 << 16);
 const put_mem = (vs, off = 0) => {
@@ -22,8 +25,9 @@ const prg = `
 loop:
  lda $20
  adc #$1
- beq done
  sta $20
+ cmp #$f9
+ jmp done
  jmp loop
 loadit:
  lda #$f8
@@ -33,6 +37,14 @@ done:
  ldy #$42
  jmp done
 `;
+
+$click("#btnAssemble", () => {
+    const p = $("#prg").innerHTML;
+    const asm = assemble(p);
+    $("#bytes").innerHTML = asm
+        .map((v) => v.toString(16).padStart(2, "0"))
+        .join(" ");
+});
 
 put_mem(assemble(prg));
 
@@ -57,4 +69,6 @@ console.log(
     hex(cpu.regs.x),
     "Y:",
     hex(cpu.regs.y),
+    "N:",
+    Object.entries(cpu.flags),
 );
