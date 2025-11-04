@@ -156,18 +156,12 @@ export const init_cpu = (cpu) => {
     return cpu.pins;
 };
 
-const cmp = (cpu, r, v) => {
-    //_m6502_cmp(m6502_t* cpu, uint8_t r, uint8_t v) {
-    const t = r - v;
+const cmp = (cpu, a, b) => {
+    const diff = a - b;
+    const uns = diff & 0xff; // convert to unsigned
     // set neg and zero
-    // TODO: nope: unsigned check...
-    set_nz(cpu.flags, t);
-
-    // clear carry
-    // ~M6502_CF
-    // set carry
-    cpu.flags.carry = t && 0xff00 ? false : true;
-    // ((t & 0xFF00) ? 0:M6502_CF
+    set_nz(cpu.flags, uns);
+    cpu.flags.carry = !(diff & 0xff00);
 };
 
 // Tick one clock cycle
